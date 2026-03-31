@@ -1571,48 +1571,87 @@ function renderStats(){
         ${accMap.weak?`<div style="flex:${accMap.weak};background:var(--lose)"></div>`:''}
       </div>
     </div>`;}
-  html+=`<div class="sect">ヒートマップ</div><div style="display:flex;gap:9px;margin-bottom:14px">
-    <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:8px"><div style="font-size:9px;letter-spacing:2px;color:var(--win);margin-bottom:5px">✦ 得点</div><canvas id="cv-w" width="200" height="307" style="width:100%;border-radius:4px"></canvas></div>
-    <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:8px"><div style="font-size:9px;letter-spacing:2px;color:var(--lose);margin-bottom:5px">✦ 失点</div><canvas id="cv-l" width="200" height="307" style="width:100%;border-radius:4px"></canvas></div>
+  html+=`<div class="sect">着地点ヒートマップ（選手別）</div>`;
+  // Player color legend
+  html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">`;
+  PK.forEach(k=>{html+=`<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8">
+    <div style="width:10px;height:10px;border-radius:50%;background:${PC[k]};flex-shrink:0;"></div>
+    ${db.players[k]}
+  </div>`;});
+  html+=`</div>`;
+  html+=`<div style="display:flex;gap:9px;margin-bottom:14px">
+    <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:8px">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--win);margin-bottom:5px">✦ 得点ラリー</div>
+      <canvas id="cv-w" width="200" height="307" style="width:100%;border-radius:4px"></canvas>
+    </div>
+    <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:8px">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--lose);margin-bottom:5px">✦ 失点ラリー</div>
+      <canvas id="cv-l" width="200" height="307" style="width:100%;border-radius:4px"></canvas>
+    </div>
   </div>`;
-  body.innerHTML=html;setTimeout(()=>{drawHM('cv-w',wins,'#00e87a');drawHM('cv-l',loses,'#ff3d5a');},60);
+  body.innerHTML=html;setTimeout(()=>{drawHM('cv-w',wins);drawHM('cv-l',loses);},60);
 }
-function drawHM(id,rallies,col){
+function drawHM(id,rallies){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
   ctx.clearRect(0,0,W,H);ctx.fillStyle='#0c1a10';ctx.fillRect(0,0,W,H);
-  const sc=W/264; // scale relative to court width 264px
-  // Court lines on heatmap
-  ctx.strokeStyle='#2e7d4f';ctx.lineWidth=0.8;
-  ctx.strokeRect(4,4,W-8,H-8); // outer boundary
-  const sl=4+(38-18)*sc,sr=W-4-(18)*sc*0; // singles lines
-  const slx=4+(38-18)*(W-8)/264,srx=W-4-(282-262)*(W-8)/264;
-  const lsTop=4+(42-18)*(H-8)/424,lsBot=H-4-(442-418)*(H-8)/424;
-  const ssTop=4+(167-18)*(H-8)/424,ssBot=H-4-(442-293)*(H-8)/424;
+
+  // ── Court lines ──
+  const slx=4+(38-18)*(W-8)/264, srx=W-4-(282-262)*(W-8)/264;
+  const lsTop=4+(42-18)*(H-8)/424, lsBot=H-4-(442-418)*(H-8)/424;
+  const ssTop=4+(167-18)*(H-8)/424, ssBot=H-4-(442-293)*(H-8)/424;
   const netY=H/2;
-  // Singles side lines
-  ctx.beginPath();ctx.moveTo(slx,4);ctx.lineTo(slx,H-4);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(srx,4);ctx.lineTo(srx,H-4);ctx.stroke();
-  // Long service lines
-  ctx.beginPath();ctx.moveTo(4,lsTop);ctx.lineTo(W-4,lsTop);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(4,lsBot);ctx.lineTo(W-4,lsBot);ctx.stroke();
-  // Short service lines
-  ctx.beginPath();ctx.moveTo(4,ssTop);ctx.lineTo(W-4,ssTop);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(4,ssBot);ctx.lineTo(W-4,ssBot);ctx.stroke();
-  // Center lines (back line to short service line only)
   ctx.strokeStyle='#2e7d4f';ctx.lineWidth=0.8;
-  ctx.beginPath();ctx.moveTo(W/2,4);ctx.lineTo(W/2,ssTop);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(W/2,ssBot);ctx.lineTo(W/2,H-4);ctx.stroke();
-  // Net
+  ctx.strokeRect(4,4,W-8,H-8);
+  [[slx,4,slx,H-4],[srx,4,srx,H-4],
+   [4,lsTop,W-4,lsTop],[4,lsBot,W-4,lsBot],
+   [4,ssTop,W-4,ssTop],[4,ssBot,W-4,ssBot],
+   [W/2,4,W/2,ssTop],[W/2,ssBot,W/2,H-4]
+  ].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();});
   ctx.strokeStyle='#4a90d9';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.moveTo(4,netY-1);ctx.lineTo(W-4,netY-1);ctx.stroke();
   ctx.beginPath();ctx.moveTo(4,netY+1);ctx.lineTo(W-4,netY+1);ctx.stroke();
 
-  if(!rallies.length){ctx.fillStyle='#475569';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('データなし',W/2,H/2+4);return;}
+  if(!rallies.length){
+    ctx.fillStyle='#475569';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('データなし',W/2,H/2+4);return;
+  }
+
+  // ── Pass 1: glow blobs (shooter position + landing) ──
   rallies.forEach(r=>(r.shots||[]).forEach(s=>{
-    if(s.positions&&s.player&&s.positions[s.player]){const sx=(s.positions[s.player].x/300)*W,sy=(s.positions[s.player].y/460)*H;const g2=ctx.createRadialGradient(sx,sy,0,sx,sy,12);g2.addColorStop(0,col+'44');g2.addColorStop(1,'transparent');ctx.fillStyle=g2;ctx.beginPath();ctx.arc(sx,sy,12,0,Math.PI*2);ctx.fill();}
-    const lx=(s.landX/300)*W,ly=(s.landY/460)*H;const g3=ctx.createRadialGradient(lx,ly,0,lx,ly,16);g3.addColorStop(0,col+'88');g3.addColorStop(1,'transparent');ctx.fillStyle=g3;ctx.beginPath();ctx.arc(lx,ly,16,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=col;ctx.globalAlpha=.75;ctx.beginPath();ctx.arc(lx,ly,2.5,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+    const pCol=PC[s.player]||'#94a3b8';
+    // Shooter position: soft glow in player color
+    if(s.positions&&s.player&&s.positions[s.player]){
+      const sx=(s.positions[s.player].x/300)*W, sy=(s.positions[s.player].y/460)*H;
+      const g2=ctx.createRadialGradient(sx,sy,0,sx,sy,14);
+      g2.addColorStop(0,pCol+'33');g2.addColorStop(1,'transparent');
+      ctx.fillStyle=g2;ctx.beginPath();ctx.arc(sx,sy,14,0,Math.PI*2);ctx.fill();
+    }
+    // Landing: medium glow in player color
+    const lx=(s.landX/300)*W, ly=(s.landY/460)*H;
+    const g3=ctx.createRadialGradient(lx,ly,0,lx,ly,16);
+    g3.addColorStop(0,pCol+'66');g3.addColorStop(1,'transparent');
+    ctx.fillStyle=g3;ctx.beginPath();ctx.arc(lx,ly,16,0,Math.PI*2);ctx.fill();
+  }));
+
+  // ── Pass 2: crisp dots with player color + outline ──
+  rallies.forEach(r=>(r.shots||[]).forEach(s=>{
+    const pCol=PC[s.player]||'#94a3b8';
+    const lx=(s.landX/300)*W, ly=(s.landY/460)*H;
+    // Outer ring (white) for contrast
+    ctx.fillStyle='rgba(255,255,255,0.18)';
+    ctx.beginPath();ctx.arc(lx,ly,5.5,0,Math.PI*2);ctx.fill();
+    // Filled dot in player color
+    ctx.fillStyle=pCol;ctx.globalAlpha=0.9;
+    ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+
+    // Tiny player initial label
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=pCol;
+    ctx.font='bold 5px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText((db.players[s.player]||s.player||'?').slice(0,1),lx,ly);
   }));
 }
 
