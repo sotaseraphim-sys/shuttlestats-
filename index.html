@@ -392,6 +392,74 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 /* Desktop: hide sidebar on very small, show on wide */
 @media(max-width:640px){#sb{display:none;}.scards{grid-template-columns:repeat(2,1fr);}.psgrid{grid-template-columns:1fr;}}
 
+/* ─── HELP BUTTON ─── */
+.help-btn{
+  background:transparent;border:1.5px solid var(--bd2);color:#64748b;
+  width:30px;height:30px;border-radius:50%;cursor:pointer;
+  font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .18s;flex-shrink:0;
+}
+.help-btn:hover{border-color:var(--acc);color:var(--acc);background:var(--acc2);}
+
+/* ─── HELP MODAL ─── */
+#modal-help .modal{max-width:500px;max-height:88vh;overflow-y:auto;}
+.help-section{margin-bottom:18px;}
+.help-section-title{
+  font-size:12px;font-weight:800;color:var(--acc);letter-spacing:2px;
+  margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;gap:7px;
+}
+.help-section-title .hs-icon{font-size:16px;}
+.help-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bd);align-items:flex-start;}
+.help-item:last-child{border-bottom:none;}
+.help-icon{width:32px;height:32px;border-radius:var(--rs);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--s2);}
+.help-text{flex:1;}
+.help-label{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:2px;}
+.help-desc{font-size:11px;color:#64748b;line-height:1.6;}
+.help-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-right:3px;margin-bottom:2px;}
+.hb-win{background:var(--wind);color:var(--win);border:1px solid var(--win);}
+.hb-lose{background:var(--losed);color:var(--lose);border:1px solid var(--lose);}
+.hb-acc{background:var(--s2);color:var(--gold);border:1px solid var(--gold)44;}
+.help-step{display:flex;gap:7px;align-items:flex-start;margin-bottom:5px;}
+.help-step-num{width:20px;height:20px;border-radius:50%;background:var(--acc2);color:var(--acc);
+  font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.help-step-txt{font-size:11px;color:#94a3b8;line-height:1.6;flex:1;}
+.help-tip{background:var(--s2);border-left:3px solid var(--gold);padding:7px 10px;border-radius:0 var(--rs) var(--rs) 0;margin-top:8px;}
+.help-tip p{font-size:11px;color:#94a3b8;line-height:1.6;}
+#splash{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  animation:splashFade 0.4s ease 1.0s forwards;
+  pointer-events:none;
+}
+@keyframes splashFade{
+  0%{opacity:1;}
+  100%{opacity:0;visibility:hidden;}
+}
+.splash-logo{
+  font-family:'Orbitron',monospace;font-size:36px;font-weight:900;letter-spacing:6px;
+  background:linear-gradient(120deg,var(--acc) 0%,var(--gold) 60%,var(--acc) 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:shimmer 1.2s linear infinite;
+}
+@keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+.splash-sub{
+  font-size:11px;color:#475569;letter-spacing:1.5px;
+  font-family:'M PLUS 1p',sans-serif;font-weight:400;
+}
+.splash-bar{
+  width:120px;height:2px;background:var(--bd2);border-radius:1px;overflow:hidden;margin-top:4px;
+}
+.splash-fill{
+  height:100%;width:0%;background:linear-gradient(90deg,var(--acc),var(--gold));border-radius:1px;
+  animation:splashLoad 0.9s ease forwards;
+}
+@keyframes splashLoad{0%{width:0%}80%{width:95%}100%{width:100%}}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -399,6 +467,13 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 </style>
 </head>
 <body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">ShuttleStats</div>
+  <div class="splash-sub">© 2026 Syuji Ota</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
 
 <div id="hdr">
   <div class="logo">ShuttleStats</div>
@@ -408,6 +483,7 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
     <button class="hn" onclick="showPage('stats')">統計</button>
     <button class="hn" onclick="showPage('log')">ログ</button>
     <button class="hn" onclick="openShareModal()" style="color:var(--gold);">共有</button>
+    <button class="help-btn" onclick="openModal('modal-help')" title="使い方">?</button>
   </nav>
 </div>
 
@@ -445,17 +521,29 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
         <div class="ptitle">初期陣形</div>
         <div style="font-size:10px;color:#475569;margin-bottom:7px">トークンをドラッグして選手の初期位置を設定</div>
         <svg id="fmcourt" viewBox="0 0 300 460" xmlns="http://www.w3.org/2000/svg" style="cursor:default;">
-          <defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a2010"/><stop offset="100%" stop-color="#060e08"/></linearGradient></defs>
+          <defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1e10"/><stop offset="100%" stop-color="#060e08"/></linearGradient></defs>
           <rect width="300" height="460" fill="url(#fg)" rx="4"/>
-          <rect x="18" y="18" width="264" height="424" fill="none" stroke="#1e6641" stroke-width="1.5"/>
-          <line x1="18" y1="230" x2="282" y2="230" stroke="#3b82f6" stroke-width="2.5"/>
-          <text x="150" y="225" fill="#3b82f6" font-size="7" text-anchor="middle" font-family="sans-serif" opacity=".5">N E T</text>
-          <line x1="18" y1="69" x2="282" y2="69" stroke="#1e6641" stroke-width="1"/>
-          <line x1="18" y1="391" x2="282" y2="391" stroke="#1e6641" stroke-width="1"/>
-          <line x1="150" y1="69" x2="150" y2="230" stroke="#1e6641" stroke-width="1" stroke-dasharray="4,3"/>
-          <line x1="150" y1="230" x2="150" y2="391" stroke="#1e6641" stroke-width="1" stroke-dasharray="4,3"/>
-          <text x="150" y="140" fill="#1e6641" font-size="8" text-anchor="middle" opacity=".3">相手コート</text>
-          <text x="150" y="330" fill="#1e6641" font-size="8" text-anchor="middle" opacity=".3">自チームコート</text>
+          <!-- 外枠（ダブルスサイドライン・バックライン） -->
+          <rect x="18" y="18" width="264" height="424" fill="none" stroke="#2e7d4f" stroke-width="1.5"/>
+          <!-- シングルスサイドライン -->
+          <line x1="38" y1="18" x2="38" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="262" y1="18" x2="262" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- ロングサービスライン（ダブルス）上下 -->
+          <line x1="18" y1="42" x2="282" y2="42" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="18" y1="418" x2="282" y2="418" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- ショートサービスライン 上下 -->
+          <line x1="18" y1="167" x2="282" y2="167" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="18" y1="293" x2="282" y2="293" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- センターライン（バックライン〜ショートサービスライン） -->
+          <line x1="150" y1="18" x2="150" y2="167" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="150" y1="293" x2="150" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- ネット（二重線） -->
+          <line x1="18" y1="228" x2="282" y2="228" stroke="#4a90d9" stroke-width="1.5" opacity=".6"/>
+          <line x1="18" y1="232" x2="282" y2="232" stroke="#4a90d9" stroke-width="1.5" opacity=".6"/>
+          <text x="150" y="222" fill="#4a90d9" font-size="7" text-anchor="middle" font-family="sans-serif" opacity=".5">N E T</text>
+          <!-- ゾーンラベル -->
+          <text x="150" y="120" fill="#2e7d4f" font-size="7" text-anchor="middle" opacity=".35">相手コート</text>
+          <text x="150" y="348" fill="#2e7d4f" font-size="7" text-anchor="middle" opacity=".35">自チームコート</text>
           <g id="fm-tok"></g>
         </svg>
         <div id="fmleg" style="display:flex;gap:9px;flex-wrap:wrap;margin-top:7px;"></div>
@@ -473,17 +561,28 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
       <div class="ph2-court-panel">
         <div class="court-svg-container" id="court-container">
           <svg id="playcourt" viewBox="0 0 300 460" xmlns="http://www.w3.org/2000/svg" style="touch-action:none;">
-            <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a2010"/><stop offset="100%" stop-color="#060e08"/></linearGradient></defs>
+            <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1e10"/><stop offset="100%" stop-color="#060e08"/></linearGradient></defs>
             <rect width="300" height="460" fill="url(#pg)" rx="4"/>
-            <rect x="18" y="18" width="264" height="424" fill="none" stroke="#1e6641" stroke-width="1.5"/>
-            <line x1="18" y1="230" x2="282" y2="230" stroke="#3b82f6" stroke-width="2.5"/>
-            <text x="150" y="225" fill="#3b82f6" font-size="7" text-anchor="middle" font-family="sans-serif" opacity=".5">N E T</text>
-            <line x1="18" y1="69" x2="282" y2="69" stroke="#1e6641" stroke-width="1"/>
-            <line x1="18" y1="391" x2="282" y2="391" stroke="#1e6641" stroke-width="1"/>
-            <line x1="150" y1="69" x2="150" y2="230" stroke="#1e6641" stroke-width="1" stroke-dasharray="4,3"/>
-            <line x1="150" y1="230" x2="150" y2="391" stroke="#1e6641" stroke-width="1" stroke-dasharray="4,3"/>
-            <text x="150" y="140" fill="#1e6641" font-size="7" text-anchor="middle" opacity=".2">相手</text>
-            <text x="150" y="330" fill="#1e6641" font-size="7" text-anchor="middle" opacity=".2">自チーム</text>
+            <!-- 外枠（ダブルスサイドライン・バックライン） -->
+            <rect x="18" y="18" width="264" height="424" fill="none" stroke="#2e7d4f" stroke-width="1.5"/>
+            <!-- シングルスサイドライン -->
+            <line x1="38" y1="18" x2="38" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+            <line x1="262" y1="18" x2="262" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+            <!-- ロングサービスライン（ダブルス）-->
+            <line x1="18" y1="42" x2="282" y2="42" stroke="#2e7d4f" stroke-width="1.2"/>
+            <line x1="18" y1="418" x2="282" y2="418" stroke="#2e7d4f" stroke-width="1.2"/>
+            <!-- ショートサービスライン -->
+            <line x1="18" y1="167" x2="282" y2="167" stroke="#2e7d4f" stroke-width="1.2"/>
+            <line x1="18" y1="293" x2="282" y2="293" stroke="#2e7d4f" stroke-width="1.2"/>
+            <!-- センターライン（バックライン〜ショートサービスライン） -->
+            <line x1="150" y1="18" x2="150" y2="167" stroke="#2e7d4f" stroke-width="1.2"/>
+            <line x1="150" y1="293" x2="150" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+            <!-- ネット（二重線） -->
+            <line x1="18" y1="228" x2="282" y2="228" stroke="#4a90d9" stroke-width="1.5" opacity=".7"/>
+            <line x1="18" y1="232" x2="282" y2="232" stroke="#4a90d9" stroke-width="1.5" opacity=".7"/>
+            <text x="150" y="222" fill="#4a90d9" font-size="6" text-anchor="middle" font-family="sans-serif" opacity=".5">N E T</text>
+            <text x="150" y="125" fill="#2e7d4f" font-size="6" text-anchor="middle" opacity=".2">相手</text>
+            <text x="150" y="348" fill="#2e7d4f" font-size="6" text-anchor="middle" opacity=".2">自チーム</text>
             <g id="cv-traj"></g>
             <g id="cv-marks"></g>
             <g id="cv-tok"></g>
@@ -559,15 +658,26 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
             <filter id="glow2"><feGaussianBlur stdDeviation="6" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
           </defs>
           <rect width="300" height="460" fill="url(#rg)" rx="4"/>
-          <rect x="18" y="18" width="264" height="424" fill="none" stroke="#1e6641" stroke-width="1.5"/>
-          <line x1="18" y1="230" x2="282" y2="230" stroke="#3b82f6" stroke-width="2.5"/>
-          <text x="150" y="225" fill="#3b82f6" font-size="7" text-anchor="middle" font-family="sans-serif" opacity=".5">N E T</text>
-          <line x1="18" y1="69" x2="282" y2="69" stroke="#1e6641" stroke-width="1"/>
-          <line x1="18" y1="391" x2="282" y2="391" stroke="#1e6641" stroke-width="1"/>
-          <line x1="150" y1="69" x2="150" y2="230" stroke="#1e6641" stroke-width="1" stroke-dasharray="4,3"/>
-          <line x1="150" y1="230" x2="150" y2="391" stroke="#1e6641" stroke-width="1" stroke-dasharray="4,3"/>
-          <text x="150" y="140" fill="#1e6641" font-size="7" text-anchor="middle" opacity=".22">相手コート</text>
-          <text x="150" y="330" fill="#1e6641" font-size="7" text-anchor="middle" opacity=".22">自チームコート</text>
+          <!-- 外枠（ダブルスサイドライン・バックライン） -->
+          <rect x="18" y="18" width="264" height="424" fill="none" stroke="#2e7d4f" stroke-width="1.5"/>
+          <!-- シングルスサイドライン -->
+          <line x1="38" y1="18" x2="38" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="262" y1="18" x2="262" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- ロングサービスライン（ダブルス） -->
+          <line x1="18" y1="42" x2="282" y2="42" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="18" y1="418" x2="282" y2="418" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- ショートサービスライン -->
+          <line x1="18" y1="167" x2="282" y2="167" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="18" y1="293" x2="282" y2="293" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- センターライン（バックライン〜ショートサービスライン） -->
+          <line x1="150" y1="18" x2="150" y2="167" stroke="#2e7d4f" stroke-width="1.2"/>
+          <line x1="150" y1="293" x2="150" y2="442" stroke="#2e7d4f" stroke-width="1.2"/>
+          <!-- ネット（二重線） -->
+          <line x1="18" y1="228" x2="282" y2="228" stroke="#4a90d9" stroke-width="1.5" opacity=".7"/>
+          <line x1="18" y1="232" x2="282" y2="232" stroke="#4a90d9" stroke-width="1.5" opacity=".7"/>
+          <text x="150" y="222" fill="#4a90d9" font-size="7" text-anchor="middle" font-family="sans-serif" opacity=".5">N E T</text>
+          <text x="150" y="120" fill="#2e7d4f" font-size="7" text-anchor="middle" opacity=".22">相手コート</text>
+          <text x="150" y="350" fill="#2e7d4f" font-size="7" text-anchor="middle" opacity=".22">自チームコート</text>
           <g id="rp-trails"></g><g id="rp-arc"></g><g id="rp-marks"></g><g id="rp-tokens"></g><g id="rp-shuttle"></g>
         </svg>
       </div>
@@ -640,6 +750,135 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 <!-- MODAL: EDIT RALLY — now just result, full editing done in phase2 -->
 <div class="mov" id="modal-editrally" style="display:none!important"></div>
 
+<!-- MODAL: HELP -->
+<div class="mov" id="modal-help">
+  <div class="modal">
+    <div class="mt">使い方ガイド</div>
+
+    <!-- 基本の流れ -->
+    <div class="help-section">
+      <div class="help-section-title"><span class="hs-icon">🏸</span>基本の流れ</div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-txt"><strong style="color:#e2e8f0">ゲームを作成</strong><br>サイドバー（または画面上部）の「＋ 新規ゲーム」でゲーム名・対戦相手・自チームペア・日付を設定します。</div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-txt"><strong style="color:#e2e8f0">ラリーを入力（フェーズ1）</strong><br>得点 / 失点を選び、初期陣形でプレイヤーの位置をドラッグして配置します。「次へ」で配球入力へ進みます。</div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-txt"><strong style="color:#e2e8f0">配球を入力（フェーズ2）</strong><br>ショットタブを選択 → 打球者・球種・精度を選択 → コートをタップして着地点を指定。最大50ショットまで入力できます。</div></div>
+      <div class="help-step"><div class="help-step-num">4</div><div class="help-step-txt"><strong style="color:#e2e8f0">保存</strong><br>「✦ 保存」ボタンでラリーを記録します。</div></div>
+    </div>
+
+    <!-- コート操作 -->
+    <div class="help-section">
+      <div class="help-section-title"><span class="hs-icon">📍</span>コート操作</div>
+      <div class="help-item">
+        <div class="help-icon">👆</div>
+        <div class="help-text">
+          <div class="help-label">着地点の指定</div>
+          <div class="help-desc">コートの何もない場所をタップ／クリックすると、現在のショットの着地点が設定されます。設定すると小さなリングが光ります。</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">✋</div>
+        <div class="help-text">
+          <div class="help-label">プレイヤーの移動</div>
+          <div class="help-desc">コート上の色付きトークン（選手アイコン）をドラッグすると、そのショットでの打球位置を変更できます。次のショットに進むと前のショットの位置が自動コピーされます。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ショットタブ -->
+    <div class="help-section">
+      <div class="help-section-title"><span class="hs-icon">🎯</span>ショットタブの見方</div>
+      <div class="help-item">
+        <div class="help-icon" style="font-size:13px;font-weight:800;color:#475569">1</div>
+        <div class="help-text">
+          <div class="help-label">グレー</div>
+          <div class="help-desc">未入力のショットです。</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon" style="font-size:13px;font-weight:800;color:#4da6ff">2</div>
+        <div class="help-text">
+          <div class="help-label">プレイヤーカラー（青・ピンク等）</div>
+          <div class="help-desc">打球者・球種・着地点がすべて入力済みです。</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon" style="font-size:13px;font-weight:800;color:var(--acc)">3</div>
+        <div class="help-text">
+          <div class="help-label">シアン（水色）</div>
+          <div class="help-desc">現在編集中のショットです。</div>
+        </div>
+      </div>
+      <div class="help-tip"><p>タブの下に「良」「甘」などの精度ラベルが表示されます。「＋」タブで新しいショットを追加できます（最大50ショット）。</p></div>
+    </div>
+
+    <!-- 精度入力 -->
+    <div class="help-section">
+      <div class="help-section-title"><span class="hs-icon">🎖</span>精度入力（良・普・甘）</div>
+      <div class="help-item">
+        <div class="help-icon">⭐</div>
+        <div class="help-text">
+          <div class="help-label">各ショットに精度を記録</div>
+          <div class="help-desc">
+            <span class="help-badge hb-acc" style="color:var(--win)">良 ✓</span>ナイスショット<br>
+            <span class="help-badge hb-acc" style="color:var(--gold)">普 △</span>普通のショット<br>
+            <span class="help-badge hb-acc" style="color:var(--lose)">甘 ✕</span>甘いショット・ミス気味<br>
+            同じボタンを再度タップするとクリアできます。統計ページで精度分布を確認できます。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 統計・ログ -->
+    <div class="help-section">
+      <div class="help-section-title"><span class="hs-icon">📊</span>統計・ログ</div>
+      <div class="help-item">
+        <div class="help-icon">📈</div>
+        <div class="help-text">
+          <div class="help-label">統計ページ</div>
+          <div class="help-desc">ゲーム・選手でフィルタリングして、得点率・プレイヤー別決め球・球種別統計・精度分布・ヒートマップを確認できます。</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">▶</div>
+        <div class="help-text">
+          <div class="help-label">ラリー再生</div>
+          <div class="help-desc">ログページの「▶ 再生」ボタンで、保存したラリーをアニメーション再生できます。プレイヤーの移動・シャトルの軌跡が動きます。速度変更・ステップ再生も可能です。</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">✎</div>
+        <div class="help-text">
+          <div class="help-label">ラリー修正</div>
+          <div class="help-desc">ログページの「✎ 修正」ボタンで配球入力画面に戻り、打球者・球種・精度・位置・着地点を修正できます。「✦ 更新保存」で確定します。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- データ共有 -->
+    <div class="help-section">
+      <div class="help-section-title"><span class="hs-icon">🔗</span>データの共有・保存</div>
+      <div class="help-item">
+        <div class="help-icon">📋</div>
+        <div class="help-text">
+          <div class="help-label">URLコピーで共有</div>
+          <div class="help-desc">「共有」→「📋 URLコピー」で生成されたURLをLINEやメールで送るだけで相手がデータをインポートできます。URLを開くと自動でデータが取り込まれます。</div>
+        </div>
+      </div>
+      <div class="help-item">
+        <div class="help-icon">⬇</div>
+        <div class="help-text">
+          <div class="help-label">JSONファイルで保存・共有</div>
+          <div class="help-desc">「⬇ JSON保存」でファイルをダウンロードしてバックアップできます。相手は「共有」→テキストエリアにJSONを貼り付けて「⬆ インポート実行」でデータを取り込めます。</div>
+        </div>
+      </div>
+      <div class="help-tip"><p>💡 データはブラウザのlocalStorageに自動保存されます。Safariで開いてホーム画面に追加すると、アプリのように使えます（iPhone対応）。</p></div>
+    </div>
+
+    <div class="mbtns">
+      <button class="mbok" onclick="closeModal('modal-help')" style="flex:1;">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: SHARE / IMPORT -->
 <div class="mov" id="modal-share">
   <div class="modal">
@@ -678,7 +917,7 @@ const SHOTS=[
   {id:'drop',l:'ドロップ',i:'🍂'},{id:'net',l:'ネット',i:'🕸️'},
   {id:'drive',l:'ドライブ',i:'💨'},{id:'serve',l:'サーブ',i:'🎯'},
   {id:'push',l:'プッシュ',i:'👊'},{id:'hair',l:'ヘアピン',i:'📌'},
-  {id:'lob',l:'ロブ',i:'🔺'},
+  {id:'lob',l:'ロブ',i:'🔺'},{id:'miss',l:'ミス',i:'✕'},
 ];
 const MAX_S=50;
 const SW=300,SH=460;
@@ -716,6 +955,11 @@ let editGameId=null;
 // INIT
 // ════════════════════════════════
 window.onload=()=>{
+  // Remove splash after animation completes
+  setTimeout(()=>{
+    const s=document.getElementById('splash');
+    if(s)s.remove();
+  },1500);
   document.getElementById('mg-date').value=new Date().toISOString().split('T')[0];
   initSlots();
   renderSB();
@@ -1336,13 +1580,38 @@ function renderStats(){
 function drawHM(id,rallies,col){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
-  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0a1a0f';ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='#1a5c35';ctx.lineWidth=1;ctx.strokeRect(6,6,W-12,H-12);
-  ctx.beginPath();ctx.moveTo(6,H/2);ctx.lineTo(W-6,H/2);ctx.strokeStyle='#3b82f6';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0c1a10';ctx.fillRect(0,0,W,H);
+  const sc=W/264; // scale relative to court width 264px
+  // Court lines on heatmap
+  ctx.strokeStyle='#2e7d4f';ctx.lineWidth=0.8;
+  ctx.strokeRect(4,4,W-8,H-8); // outer boundary
+  const sl=4+(38-18)*sc,sr=W-4-(18)*sc*0; // singles lines
+  const slx=4+(38-18)*(W-8)/264,srx=W-4-(282-262)*(W-8)/264;
+  const lsTop=4+(42-18)*(H-8)/424,lsBot=H-4-(442-418)*(H-8)/424;
+  const ssTop=4+(167-18)*(H-8)/424,ssBot=H-4-(442-293)*(H-8)/424;
+  const netY=H/2;
+  // Singles side lines
+  ctx.beginPath();ctx.moveTo(slx,4);ctx.lineTo(slx,H-4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(srx,4);ctx.lineTo(srx,H-4);ctx.stroke();
+  // Long service lines
+  ctx.beginPath();ctx.moveTo(4,lsTop);ctx.lineTo(W-4,lsTop);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(4,lsBot);ctx.lineTo(W-4,lsBot);ctx.stroke();
+  // Short service lines
+  ctx.beginPath();ctx.moveTo(4,ssTop);ctx.lineTo(W-4,ssTop);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(4,ssBot);ctx.lineTo(W-4,ssBot);ctx.stroke();
+  // Center lines (back line to short service line only)
+  ctx.strokeStyle='#2e7d4f';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(W/2,4);ctx.lineTo(W/2,ssTop);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2,ssBot);ctx.lineTo(W/2,H-4);ctx.stroke();
+  // Net
+  ctx.strokeStyle='#4a90d9';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(4,netY-1);ctx.lineTo(W-4,netY-1);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(4,netY+1);ctx.lineTo(W-4,netY+1);ctx.stroke();
+
   if(!rallies.length){ctx.fillStyle='#475569';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('データなし',W/2,H/2+4);return;}
   rallies.forEach(r=>(r.shots||[]).forEach(s=>{
-    if(s.positions&&s.player&&s.positions[s.player]){const sx=(s.positions[s.player].x/SW)*W,sy=(s.positions[s.player].y/SH)*H;const g2=ctx.createRadialGradient(sx,sy,0,sx,sy,12);g2.addColorStop(0,col+'44');g2.addColorStop(1,'transparent');ctx.fillStyle=g2;ctx.beginPath();ctx.arc(sx,sy,12,0,Math.PI*2);ctx.fill();}
-    const lx=(s.landX/SW)*W,ly=(s.landY/SH)*H;const g3=ctx.createRadialGradient(lx,ly,0,lx,ly,16);g3.addColorStop(0,col+'88');g3.addColorStop(1,'transparent');ctx.fillStyle=g3;ctx.beginPath();ctx.arc(lx,ly,16,0,Math.PI*2);ctx.fill();
+    if(s.positions&&s.player&&s.positions[s.player]){const sx=(s.positions[s.player].x/300)*W,sy=(s.positions[s.player].y/460)*H;const g2=ctx.createRadialGradient(sx,sy,0,sx,sy,12);g2.addColorStop(0,col+'44');g2.addColorStop(1,'transparent');ctx.fillStyle=g2;ctx.beginPath();ctx.arc(sx,sy,12,0,Math.PI*2);ctx.fill();}
+    const lx=(s.landX/300)*W,ly=(s.landY/460)*H;const g3=ctx.createRadialGradient(lx,ly,0,lx,ly,16);g3.addColorStop(0,col+'88');g3.addColorStop(1,'transparent');ctx.fillStyle=g3;ctx.beginPath();ctx.arc(lx,ly,16,0,Math.PI*2);ctx.fill();
     ctx.fillStyle=col;ctx.globalAlpha=.75;ctx.beginPath();ctx.arc(lx,ly,2.5,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
   }));
 }
