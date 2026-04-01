@@ -89,7 +89,37 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 
 /* ── PHASE 1 ── */
 #ph1{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
-.ph1s{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:11px;display:flex;flex-direction:column;gap:10px;}
+.ph1s{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 11px;display:flex;flex-direction:column;gap:9px;}
+
+/* Inline game/player strip (visible on mobile, hidden on desktop where sidebar exists) */
+.ph1-game-strip{display:none;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
+@media(max-width:640px){.ph1-game-strip{display:block;}}
+
+.pgs-hdr{display:flex;align-items:center;gap:8px;padding:8px 11px;background:var(--s2);border-bottom:1px solid var(--bd);}
+.pgs-lbl{font-size:9px;letter-spacing:3px;color:#475569;font-weight:700;flex:1;}
+.pgs-btn{background:linear-gradient(135deg,var(--acc),#0095b0);color:#000;border:none;
+  border-radius:var(--rs);padding:5px 11px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;}
+
+/* Player row in ph1 strip */
+.pgs-players{display:flex;gap:0;border-bottom:1px solid var(--bd);}
+.pgs-pl{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;
+  padding:6px 3px;font-size:10px;font-weight:700;cursor:pointer;border-right:1px solid var(--bd);}
+.pgs-pl:last-child{border-right:none;}
+.pgs-pl:active{background:var(--s2);}
+.pgs-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* Game list in ph1 strip */
+.pgs-games{max-height:110px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.pgs-gi{display:flex;align-items:center;gap:8px;padding:7px 11px;
+  border-bottom:1px solid var(--bd);cursor:pointer;transition:background .15s;}
+.pgs-gi:last-child{border-bottom:none;}
+.pgs-gi:active,.pgs-gi.sel{background:var(--acc2);}
+.pgs-gi-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);flex-shrink:0;opacity:.4;}
+.pgs-gi.sel .pgs-gi-dot{opacity:1;}
+.pgs-gi-nm{font-size:11px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pgs-gi-sc{font-size:10px;color:#475569;white-space:nowrap;}
+.pgs-gi-del{background:transparent;border:none;color:#475569;cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;transition:color .15s;}
+.pgs-gi-del:active{color:var(--lose);}
 .ptitle{font-size:11px;font-weight:800;color:var(--acc);letter-spacing:2px;margin-bottom:3px;}
 .rrow{display:flex;gap:7px;}
 .rb{flex:1;padding:13px 4px;border-radius:var(--rs);border:2px solid;background:transparent;
@@ -116,14 +146,14 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 
 /* ── Portrait layout (default) ── */
 .ph2-portrait{display:flex;flex-direction:column;width:100%;height:100%;}
-.ph2-court-panel{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--s1);position:relative;}
+.ph2-court-panel{flex:7;min-height:0;display:flex;flex-direction:column;background:var(--s1);position:relative;}
 
 /* Court SVG — fills available space */
-.court-svg-container{flex:1;min-height:0;padding:6px 6px 0;display:flex;align-items:stretch;}
+.court-svg-container{flex:1;min-height:0;padding:5px 5px 0;display:flex;align-items:stretch;}
 .court-svg-container svg{width:100%;height:100%;cursor:crosshair;display:block;touch-action:none;}
 
-/* Bottom controls sheet */
-.ctrl-sheet{flex-shrink:0;background:var(--s0);border-top:1px solid var(--bd);
+/* Bottom controls sheet — max 30% of viewport */
+.ctrl-sheet{flex:0 0 auto;max-height:30vh;background:var(--s0);border-top:1px solid var(--bd);
   display:flex;flex-direction:column;overflow:hidden;}
 
 /* Shot step tabs — compact */
@@ -224,11 +254,11 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
   .shot-editor{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 }
 
-/* ── Portrait mobile: ctrl-sheet fixed compact height ── */
+/* ── Portrait mobile: court fills 70%, controls 30% ── */
 @media(max-width:599px) and (orientation:portrait){
   .ph2-portrait{flex-direction:column;}
   .ph2-court-panel{flex:1;min-height:0;}
-  .ctrl-sheet{flex-shrink:0;max-height:54vh;}
+  .ctrl-sheet{flex:0 0 auto;max-height:30vh;}
   .shot-editor{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;}
 }
 
@@ -461,6 +491,11 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
   font-size:11px;color:#475569;letter-spacing:1.5px;
   font-family:'M PLUS 1p',sans-serif;font-weight:400;
 }
+.splash-ver{
+  font-size:10px;color:#2e4a6a;letter-spacing:3px;
+  font-family:'Orbitron',monospace;font-weight:700;
+  margin-top:-8px;
+}
 .splash-bar{
   width:120px;height:2px;background:var(--bd2);border-radius:1px;overflow:hidden;margin-top:4px;
 }
@@ -481,7 +516,8 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 <!-- SPLASH -->
 <div id="splash">
   <div class="splash-logo">ShuttleStats</div>
-  <div class="splash-sub">© 2026 Syuji Ota</div>
+  <div class="splash-sub">© <span id="splash-year"></span> Syuji Ota</div>
+  <div class="splash-ver" id="splash-ver"></div>
   <div class="splash-bar"><div class="splash-fill"></div></div>
 </div>
 
@@ -520,6 +556,19 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
   <!-- Phase 1 -->
   <div id="ph1">
     <div class="ph1s">
+
+      <!-- Mobile-only: inline game/player management strip -->
+      <div class="ph1-game-strip">
+        <div class="pgs-hdr">
+          <span class="pgs-lbl">ゲーム選択</span>
+          <button class="pgs-btn" onclick="openGameModal()">＋ 新規</button>
+        </div>
+        <!-- Player name row -->
+        <div class="pgs-players" id="ph1-players"></div>
+        <!-- Game list -->
+        <div class="pgs-games" id="ph1-games"></div>
+      </div>
+
       <div>
         <div class="ptitle">ラリー結果</div>
         <div class="rrow">
@@ -918,6 +967,12 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 
 <script>
 // ════════════════════════════════
+// VERSION
+// ════════════════════════════════
+const APP_VERSION = '1.4.0';
+const APP_DATE    = '2026';
+
+// ════════════════════════════════
 // CONSTANTS
 // ════════════════════════════════
 const PK=['A','B','C','D'];
@@ -970,6 +1025,11 @@ window.onload=()=>{
     const s=document.getElementById('splash');
     if(s)s.remove();
   },1500);
+  // Set splash version info
+  const sy=document.getElementById('splash-year');
+  if(sy) sy.textContent=APP_DATE;
+  const sv=document.getElementById('splash-ver');
+  if(sv) sv.textContent='v'+APP_VERSION;
   document.getElementById('mg-date').value=new Date().toISOString().split('T')[0];
   initSlots();
   renderSB();
@@ -990,6 +1050,41 @@ function newSlot(){
     ?JSON.parse(JSON.stringify(slots[slots.length-1].positions))
     :JSON.parse(JSON.stringify(ph1.initPos));
   return{player:null,shotId:null,acc:null,positions:prev,landX:null,landY:null};
+}
+
+// ════════════════════════════════
+// PH1 INLINE GAME/PLAYER STRIP (mobile)
+// ════════════════════════════════
+function renderPh1Strip(){
+  // Players
+  const pl=document.getElementById('ph1-players');
+  if(pl){
+    pl.innerHTML=PK.map(k=>`
+      <div class="pgs-pl" onclick="editPl('${k}')">
+        <div class="pgs-dot" style="background:${PC[k]}"></div>
+        <span style="max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${db.players[k]}</span>
+        <span style="font-size:9px;color:#475569">✎</span>
+      </div>`).join('');
+  }
+  // Games
+  const gl=document.getElementById('ph1-games');
+  if(gl){
+    if(!db.games.length){
+      gl.innerHTML=`<div style="padding:8px 11px;font-size:10px;color:#475569">ゲームがありません</div>`;
+      return;
+    }
+    gl.innerHTML=[...db.games].reverse().map(g=>{
+      const w=(g.rallies||[]).filter(r=>r.result==='win').length;
+      const l=(g.rallies||[]).filter(r=>r.result==='lose').length;
+      const isActive=db.activeGame===g.id;
+      return`<div class="pgs-gi ${isActive?'sel':''}" onclick="selGame('${g.id}')">
+        <div class="pgs-gi-dot" style="${isActive?'background:var(--acc)':''}"></div>
+        <span class="pgs-gi-nm">${g.name}${g.opponent?' vs '+g.opponent:''}</span>
+        <span class="pgs-gi-sc"><span style="color:var(--win)">${w}得</span> <span style="color:var(--lose)">${l}失</span></span>
+        <button class="pgs-gi-del" onclick="confirmDelGame(event,'${g.id}','${g.name}')">✕</button>
+      </div>`;
+    }).join('');
+  }
 }
 
 // ════════════════════════════════
@@ -1016,6 +1111,7 @@ function renderSB(){
       </div>`;
     }).join('');
   rebuildMGTeam();rebuildPFBtns();updPill();
+  renderPh1Strip();
 }
 function updPill(){
   const g=aGame();const t=document.getElementById('pilltxt');
