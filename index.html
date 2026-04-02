@@ -236,8 +236,10 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 .bsm{padding:9px 11px;border-radius:var(--rs);border:none;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;min-height:38px;}
 .bbk{background:var(--s2);border:1px solid var(--bd);color:#64748b;}
 .bbk:active{opacity:.7;}
-.bsave{background:linear-gradient(135deg,var(--win),#00b05a);color:#000;flex:1;}
-.bsave:disabled{opacity:.35;cursor:not-allowed;}
+.bsave-win{background:linear-gradient(135deg,var(--win),#00b05a);color:#000;flex:1;}
+.bsave-win:disabled{opacity:.35;cursor:not-allowed;}
+.bsave-lose{background:linear-gradient(135deg,var(--lose),#c02040);color:#fff;flex:1;}
+.bsave-lose:disabled{opacity:.35;cursor:not-allowed;}
 
 /* Court touch feedback overlay */
 .land-flash{position:absolute;pointer-events:none;border-radius:50%;
@@ -548,9 +550,9 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 <!-- INPUT PAGE -->
 <div class="page act" id="page-input">
   <div id="prog">
-    <div class="ps active" id="ps1"><div class="pn">1</div><span>結果・陣形</span></div>
+    <div class="ps active" id="ps1"><div class="pn">1</div><span>陣形</span></div>
     <div class="parr">›</div>
-    <div class="ps" id="ps2"><div class="pn">2</div><span>配球入力</span></div>
+    <div class="ps" id="ps2"><div class="pn">2</div><span>配球・結果</span></div>
   </div>
 
   <!-- Phase 1 -->
@@ -569,13 +571,6 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
         <div class="pgs-games" id="ph1-games"></div>
       </div>
 
-      <div>
-        <div class="ptitle">ラリー結果</div>
-        <div class="rrow">
-          <button class="rb win" id="rb-win" onclick="selResult('win')">✦ 得点</button>
-          <button class="rb lose" id="rb-lose" onclick="selResult('lose')">✦ 失点</button>
-        </div>
-      </div>
       <div>
         <div class="ptitle">初期陣形</div>
         <div style="font-size:10px;color:#475569;margin-bottom:7px">トークンをドラッグして選手の初期位置を設定</div>
@@ -609,7 +604,7 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
       </div>
     </div>
     <div class="ph1f">
-      <button class="btnfull btnpri" id="btn-ph2" onclick="goPhase2()" disabled>次へ：配球入力 →</button>
+      <button class="btnfull btnpri" id="btn-ph2" onclick="goPhase2()">次へ：配球入力 →</button>
     </div>
   </div>
 
@@ -662,8 +657,9 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
           <!-- filled by JS -->
         </div>
         <div class="ph2-actbar">
-          <button class="bsm bbk" id="btn-ph2-back" onclick="ph2Back()" style="padding:11px 14px;">← 戻る</button>
-          <button class="bsm bsave" id="btn-save" onclick="saveRally()" disabled>✦ 保存</button>
+          <button class="bsm bbk" id="btn-ph2-back" onclick="ph2Back()">← 戻る</button>
+          <button class="bsm bsave-win" id="btn-save-win" onclick="saveRallyResult('win')" disabled>✦ 得点</button>
+          <button class="bsm bsave-lose" id="btn-save-lose" onclick="saveRallyResult('lose')" disabled>✦ 失点</button>
         </div>
       </div>
     </div>
@@ -1199,9 +1195,6 @@ function delGame(gId){
 // ════════════════════════════════
 function selResult(r){
   ph1.result=r;
-  document.getElementById('rb-win').classList.toggle('sel',r==='win');
-  document.getElementById('rb-lose').classList.toggle('sel',r==='lose');
-  document.getElementById('btn-ph2').disabled=false;
 }
 function renderFmCourt(){
   const g=document.getElementById('fm-tok');g.innerHTML='';
@@ -1224,7 +1217,6 @@ function initFmDrag(){
   window.addEventListener('mouseup',()=>ph1.drag=null);window.addEventListener('touchend',()=>ph1.drag=null);
 }
 function goPhase2(){
-  if(!ph1.result){toast('結果を選んでください','err');return;}
   slots[0].positions=JSON.parse(JSON.stringify(ph1.initPos));
   document.getElementById('ph1').style.display='none';
   document.getElementById('ph2').style.display='block';
@@ -1497,16 +1489,24 @@ function addSlot(){
 }
 function updSaveBtn(){
   const ok=slots.some(s=>s.player&&s.shotId&&s.landX!==null);
-  document.getElementById('btn-save').disabled=!ok;
+  const bw=document.getElementById('btn-save-win');
+  const bl=document.getElementById('btn-save-lose');
+  if(bw) bw.disabled=!ok;
+  if(bl) bl.disabled=!ok;
 }
 
 // ════════════════════════════════
 // SAVE RALLY
 // ════════════════════════════════
+function saveRallyResult(result){
+  ph1.result=result;
+  saveRally();
+}
 function saveRally(){
   if(!db.activeGame&&!editRallyRef){toast('ゲームを選択してください','err');return;}
   const valid=slots.filter(s=>s.player&&s.shotId&&s.landX!==null);
   if(!valid.length){toast('ショットを1つ以上完成させてください','err');return;}
+  if(!ph1.result){toast('得点または失点を選んでください','err');return;}
   const shots=valid.map(s=>{const sh=SHOTS.find(x=>x.id===s.shotId);
     return{player:s.player,playerName:db.players[s.player],shotId:s.shotId,shotLabel:sh.l,shotIcon:sh.i,
       acc:s.acc||null,positions:JSON.parse(JSON.stringify(s.positions)),landX:s.landX,landY:s.landY};
@@ -1532,13 +1532,10 @@ function saveRally(){
 function resetInput(){
   ph1.result=null;
   ph1.initPos={A:{x:85,y:315},B:{x:215,y:315},C:{x:85,y:155},D:{x:215,y:155}};
-  document.getElementById('rb-win').classList.remove('sel');
-  document.getElementById('rb-lose').classList.remove('sel');
   initSlots();
   document.getElementById('ph2').style.display='none';
   document.getElementById('ph1').style.display='flex';
   updProg(1);renderFmCourt();
-  document.getElementById('btn-ph2').disabled=true;
 }
 
 // ════════════════════════════════
@@ -1551,10 +1548,8 @@ function openEditRally(gId,rId){
   const r=(g.rallies||[]).find(x=>x.id===rId);if(!r)return;
   editRallyRef={gId,rId};
 
-  // Load rally data into input state
+  // Load rally result and shots into input state
   ph1.result=r.result;
-  document.getElementById('rb-win').classList.toggle('sel',r.result==='win');
-  document.getElementById('rb-lose').classList.toggle('sel',r.result==='lose');
 
   // Convert saved shots to slots
   slots=r.shots.map(s=>({
@@ -1572,20 +1567,26 @@ function openEditRally(gId,rId){
   document.getElementById('ph2').style.display='block';
   updProg(2);
 
-  // Update header pill and back button label
+  // Update back button and save buttons for edit mode
   document.getElementById('btn-ph2-back').textContent='✕ キャンセル';
   document.getElementById('btn-ph2-back').style.color='var(--lose)';
-  document.getElementById('btn-save').textContent='✦ 更新保存';
+  const bw=document.getElementById('btn-save-win');
+  const bl=document.getElementById('btn-save-lose');
+  if(bw) bw.textContent='✦ 得点で更新';
+  if(bl) bl.textContent='✦ 失点で更新';
 
   renderShotTabs();renderShotEditor();renderPlayCourt();
-  toast('ラリー編集モード — 保存で確定','ok');
+  toast('ラリー編集モード — 得点/失点ボタンで更新','ok');
 }
 
 function exitEditMode(){
   editRallyRef=null;
   document.getElementById('btn-ph2-back').textContent='← 戻る';
   document.getElementById('btn-ph2-back').style.color='';
-  document.getElementById('btn-save').textContent='✦ 保存';
+  const bw=document.getElementById('btn-save-win');
+  const bl=document.getElementById('btn-save-lose');
+  if(bw) bw.textContent='✦ 得点';
+  if(bl) bl.textContent='✦ 失点';
   showPage('log');renderLog();
 }
 
