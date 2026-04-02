@@ -808,7 +808,10 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 <!-- MODAL: HELP -->
 <div class="mov" id="modal-help">
   <div class="modal">
-    <div class="mt">使い方ガイド</div>
+    <div class="mt" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+      使い方ガイド
+      <span id="help-ver-info" style="font-family:'M PLUS 1p',sans-serif;font-size:10px;color:#475569;letter-spacing:1px;font-weight:400;"></span>
+    </div>
 
     <!-- 基本の流れ -->
     <div class="help-section">
@@ -1026,6 +1029,8 @@ window.onload=()=>{
   if(sy) sy.textContent=APP_DATE;
   const sv=document.getElementById('splash-ver');
   if(sv) sv.textContent='v'+APP_VERSION;
+  const hv=document.getElementById('help-ver-info');
+  if(hv) hv.textContent='ShuttleStats v'+APP_VERSION+' ©'+APP_DATE+' Syuji Ota';
   document.getElementById('mg-date').value=new Date().toISOString().split('T')[0];
   initSlots();
   renderSB();
