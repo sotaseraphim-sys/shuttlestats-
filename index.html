@@ -615,8 +615,17 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
       <div class="ph2-court-panel">
         <div class="court-svg-container" id="court-container">
           <svg id="playcourt" viewBox="0 0 300 460" xmlns="http://www.w3.org/2000/svg" style="touch-action:none;">
-            <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1e10"/><stop offset="100%" stop-color="#060e08"/></linearGradient></defs>
-            <rect width="300" height="460" fill="url(#pg)" rx="4"/>
+            <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1e10"/><stop offset="100%" stop-color="#060e08"/></linearGradient>
+            <pattern id="out-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#1a2a1a" stroke-width="1.5"/>
+            </pattern></defs>
+            <!-- Out-of-court background (hatched) -->
+            <rect width="300" height="460" fill="url(#out-hatch)" rx="4"/>
+            <!-- In-court surface -->
+            <rect x="18" y="18" width="264" height="424" fill="url(#pg)"/>
+            <!-- OUT label corners -->
+            <text x="9" y="14" fill="#1e3a1e" font-size="5" font-family="sans-serif" opacity=".6">OUT</text>
+            <text x="9" y="454" fill="#1e3a1e" font-size="5" font-family="sans-serif" opacity=".6">OUT</text>
             <!-- 外枠（ダブルスサイドライン・バックライン） -->
             <rect x="18" y="18" width="264" height="424" fill="none" stroke="#2e7d4f" stroke-width="1.5"/>
             <!-- シングルスサイドライン -->
@@ -968,7 +977,7 @@ body{font-family:'M PLUS 1p',sans-serif;background:var(--bg);color:#e2e8f0;displ
 // ════════════════════════════════
 // VERSION
 // ════════════════════════════════
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 const APP_DATE    = '2026';
 
 // ════════════════════════════════
@@ -978,7 +987,7 @@ const PK=['A','B','C','D'];
 const PC={A:'#4da6ff',B:'#ff6eb4',C:'#3de0b3',D:'#ff9f43'};
 const SHOTS=[
   {id:'smash',l:'スマッシュ',i:'⚡'},{id:'clear',l:'クリア',i:'🌙'},
-  {id:'drop',l:'ドロップ',i:'🍂'},{id:'net',l:'ネット',i:'🕸️'},
+  {id:'drop',l:'ドロップ',i:'🍂'},{id:'net',l:'ネットアウト',i:'🕸️'},
   {id:'drive',l:'ドライブ',i:'💨'},{id:'serve',l:'サーブ',i:'🎯'},
   {id:'push',l:'プッシュ',i:'👊'},{id:'hair',l:'ヘアピン',i:'📌'},
   {id:'lob',l:'ロブ',i:'🔺'},{id:'miss',l:'ミス',i:'✕'},
@@ -1395,8 +1404,8 @@ function initPlayCourtEv(){
   function svgXY(clientX,clientY){
     const r=svg.getBoundingClientRect();
     return{
-      x:clamp((clientX-r.left)/r.width*SW,22,278),
-      y:clamp((clientY-r.top)/r.height*SH,22,438),
+      x:clamp((clientX-r.left)/r.width*SW,2,298),   // full SVG width (out allowed)
+      y:clamp((clientY-r.top)/r.height*SH,2,458),   // full SVG height (out allowed)
     };
   }
 
@@ -1683,88 +1692,265 @@ function renderStats(){
         ${accMap.weak?`<div style="flex:${accMap.weak};background:var(--lose)"></div>`:''}
       </div>
     </div>`;}
-  html+=`<div class="sect">着地点ヒートマップ（選手別）</div>`;
-  // Player color legend
-  html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">`;
-  PK.forEach(k=>{html+=`<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8">
-    <div style="width:10px;height:10px;border-radius:50%;background:${PC[k]};flex-shrink:0;"></div>
-    ${db.players[k]}
-  </div>`;});
-  html+=`</div>`;
+  // ── 18-block zone heatmap + trajectory + course analysis ──
+  html+=`<div class="sect">コース分析（18ブロック）</div>`;
+  // Legend
+  html+=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">
+    ${PK.map(k=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#94a3b8">
+      <div style="width:9px;height:9px;border-radius:50%;background:${PC[k]}"></div>${db.players[k]}</div>`).join('')}
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#94a3b8;margin-left:6px">
+      <span style="color:var(--win);font-size:13px">★</span>得点着地
+      <span style="color:var(--lose);font-size:13px;margin-left:5px">✕</span>失点着地
+    </div>
+  </div>`;
+
+  // Course analysis (straight/center/cross)
+  const courseStats=calcCourseStats(rs);
+  html+=`<div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:14px;">
+    <div style="font-size:9px;letter-spacing:3px;color:var(--acc);margin-bottom:10px;font-weight:700">コース別 集計（打者視点）</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      ${['straight','center','cross'].map(c=>{
+        const d=courseStats[c];const tot=d.win+d.lose;const r2=tot?Math.round(d.win/tot*100):0;
+        const label=c==='straight'?'ストレート':c==='center'?'センター':'クロス';
+        const icon=c==='straight'?'↑':c==='center'?'↕':'↗';
+        const fc=r2>=60?'var(--win)':r2>=40?'var(--gold)':'var(--lose)';
+        return`<div style="text-align:center;background:var(--s2);border-radius:var(--rs);padding:8px 4px;">
+          <div style="font-size:16px;margin-bottom:2px">${icon}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--acc);margin-bottom:4px">${label}</div>
+          <div style="font-size:10px;color:var(--win)">${d.win}得</div>
+          <div style="font-size:10px;color:var(--lose)">${d.lose}失</div>
+          ${tot?`<div style="font-size:11px;font-weight:700;color:${fc};margin-top:2px">${r2}%</div>`:'<div style="font-size:10px;color:#475569">—</div>'}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  // Dual canvas: win trajectories + lose trajectories
   html+=`<div style="display:flex;gap:9px;margin-bottom:14px">
     <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:8px">
-      <div style="font-size:9px;letter-spacing:2px;color:var(--win);margin-bottom:5px">✦ 得点ラリー</div>
+      <div style="font-size:9px;letter-spacing:2px;color:var(--win);margin-bottom:5px">★ 得点ラリー 全軌跡</div>
       <canvas id="cv-w" width="200" height="307" style="width:100%;border-radius:4px"></canvas>
     </div>
     <div style="flex:1;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:8px">
-      <div style="font-size:9px;letter-spacing:2px;color:var(--lose);margin-bottom:5px">✦ 失点ラリー</div>
+      <div style="font-size:9px;letter-spacing:2px;color:var(--lose);margin-bottom:5px">✕ 失点ラリー 全軌跡</div>
       <canvas id="cv-l" width="200" height="307" style="width:100%;border-radius:4px"></canvas>
     </div>
   </div>`;
-  body.innerHTML=html;setTimeout(()=>{drawHM('cv-w',wins);drawHM('cv-l',loses);},60);
+
+  // 18-block zone table
+  html+=buildZoneTable(rs);
+
+  body.innerHTML=html;
+  setTimeout(()=>{
+    drawHM('cv-w',wins,'win');
+    drawHM('cv-l',loses,'lose');
+  },60);
 }
-function drawHM(id,rallies){
+// ════════════════════════════════
+// COURSE ANALYSIS
+// ════════════════════════════════
+// Court SVG: 300x460, net at y=230, self=bottom(y>230), opp=top(y<230)
+// 18 blocks: 9 in each half, 3 cols × 3 rows
+// Shooter is in self half (y>230). Landing in opp half (y<230).
+// From shooter's perspective:
+//   Straight = same column as shooter (x close to shooter.x)
+//   Cross    = opposite column (left shooter → right landing, or vice versa)
+//   Center   = middle column
+// Column boundaries: left x<100, mid 100-200, right x>200
+
+function getZoneBlock(x,y){
+  // 0-8: opp half (y<230), 9-17: self half (y>230)
+  // Each half divided into 3x3 = 9 blocks
+  // col: 0=left(x<100), 1=mid(100-200), 2=right(x>200)
+  // row: opp half - row0=nearest net(y closest to 230), row2=back
+  //      self half - row0=nearest net, row2=back
+  const inOpp=y<=230;
+  const col=x<100?0:x<200?1:2;
+  let row;
+  if(inOpp){row=y<69?2:y<167?1:0;}  // top=far, bottom=near net
+  else{row=y>391?2:y>293?1:0;}       // bottom=far, top=near net
+  return inOpp?(row*3+col):(9+row*3+col);
+}
+
+function getCol(x){return x<100?0:x<200?1:2;}
+
+function calcCourseStats(rallies){
+  const stats={straight:{win:0,lose:0},center:{win:0,lose:0},cross:{win:0,lose:0}};
+  rallies.forEach(r=>(r.shots||[]).forEach(s=>{
+    if(!s.player||s.landX===null)return;
+    const pos=s.positions?.[s.player];if(!pos)return;
+    const shooterCol=getCol(pos.x);
+    const landCol=getCol(s.landX);
+    let course;
+    if(landCol===1)course='center';
+    else if(landCol===shooterCol)course='straight';
+    else course='cross';
+    const key=r.result==='win'?'win':'lose';
+    stats[course][key]++;
+  }));
+  return stats;
+}
+
+function buildZoneTable(rallies){
+  // Count win/lose per block
+  const blocks=Array.from({length:18},()=>({win:0,lose:0}));
+  rallies.forEach(r=>(r.shots||[]).forEach(s=>{
+    if(s.landX===null)return;
+    const b=getZoneBlock(s.landX,s.landY);
+    if(b<0||b>17)return;
+    blocks[b][r.result==='win'?'win':'lose']++;
+  }));
+  const maxVal=Math.max(1,...blocks.map(b=>b.win+b.lose));
+
+  // Build 3×6 grid (3 cols, 6 rows = 3 rows opp + 3 rows self)
+  let html=`<div class="sect">18ブロック ゾーン分布</div>
+  <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:10px;margin-bottom:14px;">
+    <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center;">
+      <div style="font-size:9px;color:#3b82f6;flex:1;text-align:center;">← 相手コート →</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:6px;">`;
+
+  // Opp half (blocks 0-8): row0(near net)→row2(back) = blocks 0-2, 3-5, 6-8
+  for(let row=0;row<3;row++){
+    for(let col=0;col<3;col++){
+      const b=row*3+col;
+      const d=blocks[b];const tot=d.win+d.lose;
+      const r2=tot?Math.round(d.win/tot*100):0;
+      const intensity=Math.round((tot/maxVal)*100);
+      const bg=tot?`rgba(59,130,246,${0.08+intensity*0.0022})`:'transparent';
+      const fc=r2>=60?'var(--win)':r2>=40?'var(--gold)':'var(--lose)';
+      html+=`<div style="background:${bg};border:1px solid var(--bd);border-radius:4px;padding:5px 3px;text-align:center;min-height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        ${tot?`<div style="font-size:10px;color:${fc};font-weight:700">${r2}%</div>
+        <div style="font-size:9px;color:#64748b">${tot}本</div>`:'<div style="font-size:9px;color:#1e3a5f">—</div>'}
+      </div>`;
+    }
+  }
+  html+=`</div>
+    <!-- NET line -->
+    <div style="border-top:2px solid #3b82f6;margin:3px 0;position:relative;">
+      <span style="position:absolute;left:50%;transform:translateX(-50%) translateY(-50%);background:var(--s1);padding:0 6px;font-size:8px;color:#3b82f6;letter-spacing:1px;">NET</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px;">`;
+
+  // Self half (blocks 9-17)
+  for(let row=0;row<3;row++){
+    for(let col=0;col<3;col++){
+      const b=9+row*3+col;
+      const d=blocks[b];const tot=d.win+d.lose;
+      const r2=tot?Math.round(d.win/tot*100):0;
+      const intensity=Math.round((tot/maxVal)*100);
+      const bg=tot?`rgba(0,232,122,${0.06+intensity*0.0018})`:'transparent';
+      const fc=r2>=60?'var(--win)':r2>=40?'var(--gold)':'var(--lose)';
+      html+=`<div style="background:${bg};border:1px solid var(--bd);border-radius:4px;padding:5px 3px;text-align:center;min-height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        ${tot?`<div style="font-size:10px;color:${fc};font-weight:700">${r2}%</div>
+        <div style="font-size:9px;color:#64748b">${tot}本</div>`:'<div style="font-size:9px;color:#1a3320">—</div>'}
+      </div>`;
+    }
+  }
+  html+=`</div>
+    <div style="font-size:9px;color:#475569;margin-top:6px;text-align:center;">← 自チームコート →　数値は得点率</div>
+  </div>`;
+  return html;
+}
+
+// ════════════════════════════════
+// HEATMAP WITH TRAJECTORIES
+// ════════════════════════════════
+function drawHM(id,rallies,mode){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
   ctx.clearRect(0,0,W,H);ctx.fillStyle='#0c1a10';ctx.fillRect(0,0,W,H);
 
   // ── Court lines ──
-  const slx=4+(38-18)*(W-8)/264, srx=W-4-(282-262)*(W-8)/264;
-  const lsTop=4+(42-18)*(H-8)/424, lsBot=H-4-(442-418)*(H-8)/424;
-  const ssTop=4+(167-18)*(H-8)/424, ssBot=H-4-(442-293)*(H-8)/424;
-  const netY=H/2;
+  const cx2y=y=>4+(y-18)*(H-8)/424;   // court y(18..442) → canvas y
+  const cx2x=x=>4+(x-18)*(W-8)/264;   // court x(18..282) → canvas x
+  // extended: allow out-of-bound coords (0..300, 0..460) → canvas
+  const cvY=y=>(y/460)*H;
+  const cvX=x=>(x/300)*W;
+
+  const slx=cx2x(38),srx=cx2x(262);
+  const lsT=cx2y(42),lsB=cx2y(418);
+  const ssT=cx2y(167),ssB=cx2y(293);
+  const netY=cx2y(230);
+
   ctx.strokeStyle='#2e7d4f';ctx.lineWidth=0.8;
-  ctx.strokeRect(4,4,W-8,H-8);
-  [[slx,4,slx,H-4],[srx,4,srx,H-4],
-   [4,lsTop,W-4,lsTop],[4,lsBot,W-4,lsBot],
-   [4,ssTop,W-4,ssTop],[4,ssBot,W-4,ssBot],
-   [W/2,4,W/2,ssTop],[W/2,ssBot,W/2,H-4]
+  ctx.strokeRect(cx2x(18),cx2y(18),cx2x(282)-cx2x(18),cx2y(442)-cx2y(18));
+  [[slx,cx2y(18),slx,cx2y(442)],[srx,cx2y(18),srx,cx2y(442)],
+   [cx2x(18),lsT,cx2x(282),lsT],[cx2x(18),lsB,cx2x(282),lsB],
+   [cx2x(18),ssT,cx2x(282),ssT],[cx2x(18),ssB,cx2x(282),ssB],
+   [W/2,cx2y(18),W/2,ssT],[W/2,ssB,W/2,cx2y(442)]
   ].forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();});
   ctx.strokeStyle='#4a90d9';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(4,netY-1);ctx.lineTo(W-4,netY-1);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(4,netY+1);ctx.lineTo(W-4,netY+1);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx2x(18),netY-0.8);ctx.lineTo(cx2x(282),netY-0.8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx2x(18),netY+0.8);ctx.lineTo(cx2x(282),netY+0.8);ctx.stroke();
 
   if(!rallies.length){
-    ctx.fillStyle='#475569';ctx.font='10px sans-serif';ctx.textAlign='center';
-    ctx.fillText('データなし',W/2,H/2+4);return;
+    ctx.fillStyle='#475569';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('データなし',W/2,H/2);return;
   }
 
-  // ── Pass 1: glow blobs (shooter position + landing) ──
+  // ── Pass 1: draw ALL trajectories (thin, translucent) ──
+  rallies.forEach(r=>{
+    const shots=r.shots||[];
+    shots.forEach((s,i)=>{
+      if(!s.player||s.landX===null)return;
+      const pos=s.positions?.[s.player];if(!pos)return;
+      const col=PC[s.player]||'#94a3b8';
+      const sx=cvX(pos.x),sy=cvY(pos.y);
+      const lx=cvX(s.landX),ly=cvY(s.landY);
+      // control point for arc
+      const mx=(sx+lx)/2,my=(sy+ly)/2;
+      const dx=lx-sx,dy=ly-sy,len=Math.sqrt(dx*dx+dy*dy)||1;
+      const cxx=mx+(-dy/len)*Math.min(len*0.22,18);
+      const cyy=my+(dx/len)*Math.min(len*0.22,18);
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(cxx,cyy,lx,ly);
+      ctx.strokeStyle=col;ctx.lineWidth=0.7;ctx.globalAlpha=0.25;
+      ctx.stroke();ctx.globalAlpha=1;
+    });
+  });
+
+  // ── Pass 2: shooter position blobs ──
   rallies.forEach(r=>(r.shots||[]).forEach(s=>{
-    const pCol=PC[s.player]||'#94a3b8';
-    // Shooter position: soft glow in player color
-    if(s.positions&&s.player&&s.positions[s.player]){
-      const sx=(s.positions[s.player].x/300)*W, sy=(s.positions[s.player].y/460)*H;
-      const g2=ctx.createRadialGradient(sx,sy,0,sx,sy,14);
-      g2.addColorStop(0,pCol+'33');g2.addColorStop(1,'transparent');
-      ctx.fillStyle=g2;ctx.beginPath();ctx.arc(sx,sy,14,0,Math.PI*2);ctx.fill();
-    }
-    // Landing: medium glow in player color
-    const lx=(s.landX/300)*W, ly=(s.landY/460)*H;
-    const g3=ctx.createRadialGradient(lx,ly,0,lx,ly,16);
-    g3.addColorStop(0,pCol+'66');g3.addColorStop(1,'transparent');
-    ctx.fillStyle=g3;ctx.beginPath();ctx.arc(lx,ly,16,0,Math.PI*2);ctx.fill();
+    if(!s.player||!s.positions?.[s.player])return;
+    const col=PC[s.player]||'#94a3b8';
+    const sx=cvX(s.positions[s.player].x),sy=cvY(s.positions[s.player].y);
+    const g2=ctx.createRadialGradient(sx,sy,0,sx,sy,10);
+    g2.addColorStop(0,col+'28');g2.addColorStop(1,'transparent');
+    ctx.fillStyle=g2;ctx.beginPath();ctx.arc(sx,sy,10,0,Math.PI*2);ctx.fill();
   }));
 
-  // ── Pass 2: crisp dots with player color + outline ──
-  rallies.forEach(r=>(r.shots||[]).forEach(s=>{
-    const pCol=PC[s.player]||'#94a3b8';
-    const lx=(s.landX/300)*W, ly=(s.landY/460)*H;
-    // Outer ring (white) for contrast
-    ctx.fillStyle='rgba(255,255,255,0.18)';
-    ctx.beginPath();ctx.arc(lx,ly,5.5,0,Math.PI*2);ctx.fill();
-    // Filled dot in player color
-    ctx.fillStyle=pCol;ctx.globalAlpha=0.9;
-    ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=1;
+  // ── Pass 3: landing markers — player-colored dots ──
+  rallies.forEach(r=>{
+    const shots=r.shots||[];
+    const isLastRally=(r===rallies[rallies.length-1]);
+    shots.forEach((s,i)=>{
+      if(s.landX===null)return;
+      const col=PC[s.player]||'#94a3b8';
+      const lx=cvX(s.landX),ly=cvY(s.landY);
+      ctx.fillStyle='rgba(0,0,0,0.5)';
+      ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=col;ctx.globalAlpha=0.85;
+      ctx.beginPath();ctx.arc(lx,ly,3,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+    });
+  });
 
-    // Tiny player initial label
-    ctx.fillStyle='rgba(0,0,0,0.7)';
-    ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=pCol;
-    ctx.font='bold 5px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText((db.players[s.player]||s.player||'?').slice(0,1),lx,ly);
-  }));
+  // ── Pass 4: final shot marker — ★ (win) or ✕ (lose) ──
+  rallies.forEach(r=>{
+    const shots=r.shots||[];
+    const last=shots[shots.length-1];
+    if(!last||last.landX===null)return;
+    const lx=cvX(last.landX),ly=cvY(last.landY);
+    const isWin=r.result==='win';
+    ctx.font=`bold ${isWin?12:11}px sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.8)';
+    ctx.fillText(isWin?'★':'✕',lx+0.5,ly+0.5);
+    // Colored marker
+    ctx.fillStyle=isWin?'#00e87a':'#ff3d5a';
+    ctx.fillText(isWin?'★':'✕',lx,ly);
+  });
 }
 
 // ════════════════════════════════
